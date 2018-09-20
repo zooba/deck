@@ -1,6 +1,6 @@
 '''Implementation of the deck collection type.'''
 
-__version__ = '2.0'
+__version__ = '2.1'
 
 import collections
 import enum
