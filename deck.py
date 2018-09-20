@@ -1,6 +1,6 @@
 '''Implementation of the deck collection type.'''
 
-__version__ = '2.1'
+__version__ = '2.2'
 
 import collections
 import enum
@@ -64,12 +64,3 @@ class Deck(collections.deque):
     deal_from_bottom = collections.deque.popleft
 
 collections.deck = Deck
-
-if __name__ == '__main__':
-    # Basic tests
-
-    d = Deck()
-    assert len(d) == 54
-
-    d = Deck(include_jokers=False)
-    assert len(d) == 52

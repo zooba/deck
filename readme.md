@@ -32,3 +32,5 @@ Importing the `deck` module also globally corrects other typographical errors th
 >>> deck
 <class 'deck.Deck'>
 ```
+
+Taking this module too seriously would be a mistake.
