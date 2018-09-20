@@ -1,0 +1,16 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "deck"
+author = "Steve Dower"
+author-email = "steve.dower@python.org"
+home-page = "http://github.com/zooba/deck"
+requires-python= ">=3.6"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: Public Domain",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+]
