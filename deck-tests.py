@@ -2,9 +2,11 @@ import unittest
 
 from deck import Deck
 
+
 class DeckTests(unittest.TestCase):
     def test_patch(self):
         import collections
+
         assert collections.deck is Deck
 
     def test_count(self):
@@ -15,5 +17,6 @@ class DeckTests(unittest.TestCase):
         d = Deck(include_jokers=False)
         assert len(d) == 52
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

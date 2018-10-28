@@ -1,17 +1,19 @@
-'''Implementation of the deck collection type.'''
+"""Implementation of the deck collection type."""
 
-__version__ = '2.2'
+__version__ = "2.2"
 
 import collections
 import enum
 import itertools
 import random
 
+
 class Suit(enum.Enum):
-    Hearts = '♥'
-    Spades = '♠'
-    Clubs = '♣'
-    Diamonds = '♦'
+    Hearts = "♥"
+    Spades = "♠"
+    Clubs = "♣"
+    Diamonds = "♦"
+
 
 class Value(enum.IntEnum):
     Ace = 1
@@ -28,6 +30,7 @@ class Value(enum.IntEnum):
     Queen = 12
     King = 13
 
+
 class Card:
     def __init__(self, suit=None, value=None, joker=False):
         self.joker = joker
@@ -41,17 +44,24 @@ class Card:
                 self.value = value
 
     def __repr__(self):
-        return "Card(joker=True)" if self.joker else f"Card({self.suit!r}, {self.value!r})"
+        return (
+            "Card(joker=True)" if self.joker else f"Card({self.suit!r}, {self.value!r})"
+        )
 
     def __str__(self):
         return "Joker" if self.joker else f"{self.value.value}{self.suit.value}"
 
+
 class Deck(collections.deque):
     def __init__(self, include_jokers=True):
-        super().__init__(map(Card, itertools.product(
-            Suit.__members__.values(),
-            Value.__members__.values()
-        )))
+        super().__init__(
+            map(
+                Card,
+                itertools.product(
+                    Suit.__members__.values(), Value.__members__.values()
+                ),
+            )
+        )
         if include_jokers:
             self.append(Card(joker=True))
             self.append(Card(joker=True))
@@ -62,5 +72,6 @@ class Deck(collections.deque):
     deal = collections.deque.pop
 
     deal_from_bottom = collections.deque.popleft
+
 
 collections.deck = Deck
