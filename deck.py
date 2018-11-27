@@ -31,6 +31,19 @@ class Value(enum.IntEnum):
     King = 13
 
 
+class PokerHand(enum.IntEnum):
+    HighCard = 1
+    Pair = 2
+    TwoPair = 3
+    ThreeOfAKind = 4
+    Straight = 5
+    Flush = 6
+    FullHouse = 7
+    FourOfAKind = 8
+    StraightFlush = 9
+    FiveOfAKind = 10
+
+
 class Card:
     def __init__(self, suit=None, value=None, joker=False):
         self.joker = joker
@@ -72,6 +85,72 @@ class Deck(collections.deque):
     deal = collections.deque.pop
 
     deal_from_bottom = collections.deque.popleft
+
+
+def aces_high(card):
+    """A sort key function to sort aces high."""
+    if isinstance(card, Value):
+        if card == Value.Ace:
+            return 14
+        return card.value
+
+    if card.joker:
+        raise ValueError("Wildcards are not supported")
+    if card.value == Value.Ace:
+        return 14
+    return card.value.value
+
+
+def get_poker_hand(cards):
+    """Given a sequence of cards, returns the best possible poker hand.
+    
+    The return value is a tuple of a member of `PokerHand` and `Value`,
+    where the value is the highest card. These tuples may be compared
+    against each other to determine the best among a set of hands.
+    """
+    cards = sorted(cards, key=aces_high, reverse=True)
+
+    if len(cards) > 5:
+        return max(map(get_poker_hand, itertools.combinations(cards, 5)))
+
+    cvalues = collections.Counter(c.value for c in cards)
+    suits = set(c.suit for c in cards)
+    of_a_kind_card, of_a_kind = cvalues.most_common(1)[0]
+    if len(cvalues) >= 2:
+        second_pair_card, second_pair = cvalues.most_common(2)[-1]
+    else:
+        second_pair_card, second_pair = None, 0
+    high_card = cards[0].value
+    values = [c.value.value for c in cards]
+    is_straight = len(cards) == 5 and all(
+        i[0].value == i[1] for i in zip(cards, range(cards[0].value, -5, -1))
+    )
+
+    if len(suits) == 1 and is_straight:
+        return PokerHand.StraightFlush, high_card
+    if of_a_kind == 4:
+        return PokerHand.FourOfAKind, of_a_kind_card
+    if of_a_kind == 3 and second_pair == 2:
+        return PokerHand.FullHouse, of_a_kind_card
+    if len(suits) == 1 and len(cards) == 5:
+        return PokerHand.Flush, high_card
+    if is_straight:
+        return PokerHand.Straight, high_card
+    if of_a_kind == 3:
+        return (PokerHand.ThreeOfAKind, of_a_kind_card) + (
+            (second_pair_card,) if second_pair_card else ()
+        )
+    if of_a_kind == 2 and second_pair == 2:
+        return (
+            PokerHand.TwoPair,
+            *sorted(filter(None, (of_a_kind_card, second_pair_card)), key=aces_high),
+        )
+    if of_a_kind == 2:
+        return (PokerHand.Pair, of_a_kind_card) + (
+            (second_pair_card,) if second_pair_card else ()
+        )
+
+    return PokerHand.HighCard, high_card
 
 
 collections.deck = Deck
