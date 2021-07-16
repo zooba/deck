@@ -44,6 +44,21 @@ class PokerHand(enum.IntEnum):
     FiveOfAKind = 10
 
 
+def _from_enum(enm, v):
+    try:
+        return enm(v)
+    except ValueError:
+        pass
+    try:
+        return getattr(enm, v)
+    except AttributeError:
+        try:
+            return getattr(enm, str(v).capitalize())
+        except AttributeError:
+            pass
+    return enm(v)
+
+
 class Card:
     def __init__(self, suit=None, value=None, joker=False):
         self.joker = joker
@@ -51,10 +66,22 @@ class Card:
             self.suit, self.value = None, None
         else:
             if value is None:
-                self.suit, self.value = suit
-            else:
-                self.suit = suit
-                self.value = value
+                suit, value = suit
+            self.suit = _from_enum(Suit, suit)
+            self.value = _from_enum(Value, value)
+
+    def __eq__(self, other):
+        if not isinstance(other, Card):
+            return False
+        if self.joker and other.joker:
+            return True
+        return other.suit == self.suit and other.value == self.value
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return 1337 if self.joker else hash((self.suit, self.value))
 
     def __repr__(self):
         return (
