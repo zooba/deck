@@ -1,6 +1,6 @@
 """Implementation of the deck collection type."""
 
-__version__ = "3.0.0rc2"
+__version__ = "3.0.0rc3"
 
 import collections
 import enum
@@ -134,6 +134,7 @@ def get_poker_hand(cards):
     The return value is a tuple of a member of `PokerHand` and `Value`,
     where the value is the highest card. These tuples may be compared
     against each other to determine the best among a set of hands.
+    The best hand sorts last (is greater than other hands).
     """
     cards = sorted(cards, key=aces_high, reverse=True)
 
@@ -154,34 +155,34 @@ def get_poker_hand(cards):
     )
 
     if len(suits) == 1 and is_straight:
-        return PokerHand.StraightFlush, high_card
+        return PokerHand.StraightFlush, aces_high(high_card)
     if of_a_kind == 4:
-        return PokerHand.FourOfAKind, of_a_kind_card
+        return PokerHand.FourOfAKind, aces_high(of_a_kind_card)
     if of_a_kind == 3 and second_pair == 2:
-        return PokerHand.FullHouse, of_a_kind_card
+        return PokerHand.FullHouse, aces_high(of_a_kind_card)
     if len(suits) == 1 and len(cards) == 5:
-        return PokerHand.Flush, high_card
+        return PokerHand.Flush, aces_high(high_card)
     if is_straight:
-        return PokerHand.Straight, high_card
+        return PokerHand.Straight, aces_high(high_card)
     if of_a_kind == 3:
         return (PokerHand.ThreeOfAKind, of_a_kind_card) + (
-            (second_pair_card,) if second_pair_card else ()
+            (aces_high(second_pair_card),) if second_pair_card else ()
         )
     if of_a_kind == 2 and second_pair == 2:
         return (
             PokerHand.TwoPair,
-            *sorted(
+            *map(aces_high, sorted(
                 filter(None, (of_a_kind_card, second_pair_card)),
                 reverse=True,
                 key=aces_high,
-            ),
+            )),
         )
     if of_a_kind == 2:
         return (PokerHand.Pair, of_a_kind_card) + (
-            (second_pair_card,) if second_pair_card else ()
+            (aces_high(second_pair_card),) if second_pair_card else ()
         )
 
-    return PokerHand.HighCard, high_card
+    return PokerHand.HighCard, *sorted((aces_high(c) for c in cvalues), reverse=True)
 
 
 collections.deck = Deck

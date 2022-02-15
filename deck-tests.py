@@ -47,7 +47,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.HighCard, deck.Value.Nine)
+        assert hand == (deck.PokerHand.HighCard, 9, 7, 5, 4, 2)
 
     def test_high_card_ace(self):
         cards = [
@@ -58,7 +58,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", "Ace"),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.HighCard, deck.Value.Ace)
+        assert hand == (deck.PokerHand.HighCard, 14, 7, 5, 4, 2)
 
     def test_pair(self):
         cards = [
@@ -69,7 +69,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.Pair, deck.Value.Nine, deck.Value.Five)
+        assert hand == (deck.PokerHand.Pair, 9, 5)
 
     def test_two_pair(self):
         cards = [
@@ -80,7 +80,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.TwoPair, deck.Value.Nine, deck.Value.Five)
+        assert hand == (deck.PokerHand.TwoPair, 9, 5)
 
     def test_triples(self):
         cards = [
@@ -91,7 +91,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.ThreeOfAKind, deck.Value.Nine, deck.Value.Four)
+        assert hand == (deck.PokerHand.ThreeOfAKind, 9, 4)
 
     def test_straight(self):
         cards = [
@@ -102,7 +102,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 6),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.Straight, deck.Value.Six)
+        assert hand == (deck.PokerHand.Straight, 6)
 
     def test_flush(self):
         cards = [
@@ -113,7 +113,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Clubs", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.Flush, deck.Value.Nine)
+        assert hand == (deck.PokerHand.Flush, 9)
 
     def test_full_house(self):
         cards = [
@@ -124,7 +124,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.FullHouse, deck.Value.Nine)
+        assert hand == (deck.PokerHand.FullHouse, 9)
 
     def test_fours(self):
         cards = [
@@ -135,7 +135,7 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.FourOfAKind, deck.Value.Nine)
+        assert hand == (deck.PokerHand.FourOfAKind, 9)
 
     def test_straight_flush(self):
         cards = [
@@ -146,8 +146,38 @@ class PokerHandTests(unittest.TestCase):
             Card("Clubs", 9),
         ]
         hand = deck.get_poker_hand(cards)
-        assert hand == (deck.PokerHand.StraightFlush, deck.Value.Nine)
+        assert hand == (deck.PokerHand.StraightFlush, 9)
 
+    def test_compare_1(self):
+        cards = [
+            Card("Spades", 2),
+            Card("Clubs", 4),
+            Card("Hearts", 5),
+            Card("Diamonds", 7),
+        ]
+        h1 = deck.get_poker_hand(cards + [Card("Spades", "Ace")])
+        h2 = deck.get_poker_hand(cards + [Card("Spades", "King")])
+        assert h1 > h2
+
+    def test_compare_2(self):
+        cards = [
+            Card("Spades", 6),
+            Card("Hearts", 2),
+            Card("Clubs", "King"),
+        ]
+        h1 = deck.get_poker_hand(cards + [Card("Diamonds", 8), Card("Diamonds", "Ace")])
+        h2 = deck.get_poker_hand(cards + [Card("Spades", 9), Card("Diamonds", 5)])
+        assert h1 > h2
+
+    def test_compare_3(self):
+        cards = [
+            Card("Diamonds", 6),
+            Card("Spades", 9),
+            Card("Clubs", "King"),
+        ]
+        h1 = deck.get_poker_hand(cards + [Card("Diamonds", 7), Card("Diamonds", "Queen")])
+        h2 = deck.get_poker_hand(cards + [Card("Hearts", 2), Card("Diamonds", "Jack")])
+        assert h1 > h2
 
 if __name__ == "__main__":
     unittest.main()
