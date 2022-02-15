@@ -1,6 +1,6 @@
 """Implementation of the deck collection type."""
 
-__version__ = "3.0.0rc1"
+__version__ = "3.0.0rc2"
 
 import collections
 import enum
@@ -170,7 +170,11 @@ def get_poker_hand(cards):
     if of_a_kind == 2 and second_pair == 2:
         return (
             PokerHand.TwoPair,
-            *sorted(filter(None, (of_a_kind_card, second_pair_card)), key=aces_high),
+            *sorted(
+                filter(None, (of_a_kind_card, second_pair_card)),
+                reverse=True,
+                key=aces_high,
+            ),
         )
     if of_a_kind == 2:
         return (PokerHand.Pair, of_a_kind_card) + (

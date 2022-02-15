@@ -20,8 +20,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install PyTest
+      run: python -m pip install pytest
     - name: Test
-      run: python deck-tests.py -v
+      run: pytest deck-tests.py -v
 
   blackify:
     runs-on: ubuntu-latest
