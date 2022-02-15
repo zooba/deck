@@ -8,10 +8,15 @@ author = "Steve Dower"
 author-email = "steve.dower@python.org"
 home-page = "http://github.com/zooba/deck"
 description-file = "readme.md"
-requires-python= ">=3.6"
+requires-python= ">=3.7"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: Public Domain",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
+
+[tool.flit.sdist]
+exclude = [".github", ".gitignore"]

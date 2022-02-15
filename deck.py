@@ -1,6 +1,6 @@
 """Implementation of the deck collection type."""
 
-__version__ = "2.2"
+__version__ = "3.0.0rc1"
 
 import collections
 import enum
@@ -130,7 +130,7 @@ def aces_high(card):
 
 def get_poker_hand(cards):
     """Given a sequence of cards, returns the best possible poker hand.
-    
+
     The return value is a tuple of a member of `PokerHand` and `Value`,
     where the value is the highest card. These tuples may be compared
     against each other to determine the best among a set of hands.
