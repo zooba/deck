@@ -130,7 +130,7 @@ def aces_high(card):
 
 def get_poker_hand(cards):
     """Given a sequence of cards, returns the best possible poker hand.
-    
+
     The return value is a tuple of a member of `PokerHand` and `Value`,
     where the value is the highest card. These tuples may be compared
     against each other to determine the best among a set of hands.
