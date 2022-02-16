@@ -35,4 +35,17 @@ Importing the `deck` module also globally corrects other typographical errors th
 <class 'deck.Deck'>
 ```
 
-Taking this module too seriously would be a mistake.
+**Taking this module too seriously would be a mistake.**
+
+However, if you want to use it to write a Poker game, the `get_poker_hand` function will help.
+
+```python
+>>> from deck import Deck, get_poker_hand
+>>> d = Deck(include_jokers=False)
+>>> d.shuffle()
+>>> p1 = [d.deal() for _ in range(5)]
+>>> p2 = [d.deal() for _ in range(5)]
+>>> if get_poker_hand(p1) > get_poker_hand(p2):
+...     print("Player 1 wins!")
+...
+```

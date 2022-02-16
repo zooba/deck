@@ -175,9 +175,12 @@ class PokerHandTests(unittest.TestCase):
             Card("Spades", 9),
             Card("Clubs", "King"),
         ]
-        h1 = deck.get_poker_hand(cards + [Card("Diamonds", 7), Card("Diamonds", "Queen")])
+        h1 = deck.get_poker_hand(
+            cards + [Card("Diamonds", 7), Card("Diamonds", "Queen")]
+        )
         h2 = deck.get_poker_hand(cards + [Card("Hearts", 2), Card("Diamonds", "Jack")])
         assert h1 > h2
+
 
 if __name__ == "__main__":
     unittest.main()
