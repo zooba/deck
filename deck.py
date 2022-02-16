@@ -184,7 +184,9 @@ def get_poker_hand(cards):
             (aces_high(second_pair_card),) if second_pair_card else ()
         )
 
-    return PokerHand.HighCard, *sorted((aces_high(c) for c in cvalues), reverse=True)
+    return (PokerHand.HighCard,) + tuple(
+        sorted((aces_high(c) for c in cvalues), reverse=True)
+    )
 
 
 collections.deck = Deck
