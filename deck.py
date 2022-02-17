@@ -43,6 +43,12 @@ class Suit(enum.Enum):
             x2 = _SUIT_SORT_ORDER[_from_enum(Suit, other).value]
         return x1 > x2
 
+    def __le__(self, other):
+        return self == other or self < other
+
+    def __ge__(self, other):
+        return self == other or self > other
+
 
 class Value(enum.IntEnum):
     Ace = 1
@@ -136,7 +142,7 @@ class Card:
         )
 
     def __str__(self):
-        return "Joker" if self.joker else f"{self.value.value}{self.suit.value}"
+        return format(self, ".")
 
     def __format__(self, spec):
         justify, _, width = (spec or ".3").partition(".")
@@ -150,7 +156,7 @@ class Card:
             for s in _VALUE_STR_MAP.get(self.value) or [str(int(self.value))]:
                 if not width or len(s) < width:
                     break
-            s = s + self.suit.value
+            s = f"{s}{self.suit.value}"
         return format(s, justify)
 
 
@@ -169,8 +175,8 @@ class Deck(collections.deque):
             self.append(Card(joker=True))
             self.append(Card(joker=True))
 
-    def shuffle(self, rng=random):
-        rng.shuffle(self)
+    def shuffle(self, random=random):
+        random.shuffle(self)
 
     deal = collections.deque.pop
 
@@ -272,6 +278,7 @@ def get_poker_hand(cards):
 class HandSort(enum.Enum):
     Default = "default"
     Poker = "poker"
+    AcesHigh = "aces_high"
     Unsorted = "unsorted"
 
 
@@ -281,9 +288,6 @@ class HandComparison(enum.Enum):
     Suits = "suits"
 
 
-_HAND_VALIDATION = contextvars.ContextVar("Hand.runtime_type_checks")
-_HAND_VALIDATION.set(False)
-
 _HAND_ORDER = contextvars.ContextVar("Hand.default_sort")
 _HAND_ORDER.set(HandSort.Default)
 
@@ -291,23 +295,20 @@ _HAND_CMP = contextvars.ContextVar("Hand.default_comparison")
 _HAND_CMP.set(HandComparison.Exact)
 
 
-class Hand:
+class Hand(list):
     """Represents a hand of cards.
 
-    Used for conveniently comparing and displaying hands."""
+    Used for conveniently comparing and displaying hands.
 
-    def __init__(self, *cards):
-        self.cards = new_cards = []
-        for c in cards:
-            if isinstance(c, Card):
-                new_cards.append(c)
-            else:
-                new_cards.extend(c)
-        if _HAND_VALIDATION.get():
-            self._check()
+    Hands support format() spec '<justification>.<width><order>',
+    where justification is an optional '<', '>' or '^' prefix followed
+    by the number of columns, and width is the maximum number of
+    characters to use when representing each card. The optional 'order'
+    specifier is either 'asc' or 'desc', to sort cards for display.
+    """
 
-    def _check(self):
-        invalid = [c for c in self.cards if not isinstance(c, Card)]
+    def check_contents(self):
+        invalid = [c for c in self if not isinstance(c, Card)]
         if invalid:
             raise ValueError(
                 "invalid objects in hand: {}".format(
@@ -315,29 +316,13 @@ class Hand:
                 )
             )
 
-    def append(self, card):
-        """Add a card to the hand."""
-        self.cards.append(card)
-        if _HAND_VALIDATION.get():
-            self._check()
-
-    def extend(self, cards):
-        """Add multiple cards to the hard."""
-        self.cards.extend(cards)
-        if _HAND_VALIDATION.get():
-            self._check()
-
     def index(self, card_suit_or_value):
         """Locate the first matching card, suit or value."""
         # Being passed a whole card is our fast path
         if isinstance(card_suit_or_value, Card):
             cmp = _HAND_CMP.get()
             if cmp == HandComparison.Exact:
-                cards = self.cards
-                for i in range(len(cards)):
-                    if cards[i] == card_suit_or_value:
-                        return i
-                raise LookupError(card_suit_or_value)
+                return super().index(card_suit_or_value)
             elif cmp == HandComparison.Values:
                 card_suit_or_value = card_suit_or_value.value
             elif cmp == HandComparison.Suits:
@@ -362,60 +347,58 @@ class Hand:
 
         # If we now have a searchable type, search for it
         if isinstance(card_suit_or_value, Value):
-            cards = self.cards
-            for i in range(len(cards)):
-                if cards[i].value == card_suit_or_value:
+            for i, c in enumerate(self):
+                if c.value == card_suit_or_value:
                     return i
         elif isinstance(card_suit_or_value, Suit):
-            cards = self.cards
-            for i in range(len(cards)):
-                if cards[i].suit == card_suit_or_value:
+            for i, c in enumerate(self):
+                if c.suit == card_suit_or_value:
                     return i
-        raise LookupError(card_suit_or_value)
+        raise ValueError(card_suit_or_value)
 
     def __contains__(self, card_suit_or_value):
         try:
             self.index(card_suit_or_value)
             return True
-        except LookupError:
+        except ValueError:
             return False
 
     def intersect(self, other, cmp=None):
         """Compares two hands by removing cards that are not in 'other'."""
         cmp = cmp or _HAND_CMP.get()
         if cmp == HandComparison.Exact:
-            return iter(set(self.cards) & set(other.cards))
+            return iter(set(self) & set(other))
         if cmp == HandComparison.Values:
-            v1 = set(c.value for c in self.cards)
-            v2 = set(c.value for c in other.cards)
+            v1 = set(c.value for c in self)
+            v2 = set(c.value for c in other)
             v12 = v1 & v2
-            return (c for c in self.cards if c.value in v12)
+            return (c for c in self if c.value in v12)
         if cmp == HandComparison.Suits:
-            s1 = set(c.suit for c in self.cards)
-            s2 = set(c.suit for c in other.cards)
+            s1 = set(c.suit for c in self)
+            s2 = set(c.suit for c in other)
             s12 = s1 & s2
-            return (c for c in self.cards if c.suit in s12)
+            return (c for c in self if c.suit in s12)
         raise ValueError("cannot compare by {}".format(cmp))
 
     def __and__(self, other):
         return type(self)(self.intersect(other))
 
     def __ibitand__(self, other):
-        self.cards[:] = self.intersect(other)
+        self[:] = self.intersect(other)
 
     def union(self, other, cmp=None):
         """Combines two hands by adding cards from 'other'."""
         cmp = cmp or _HAND_CMP.get()
-        yield from iter(self.cards)
+        yield from iter(self)
         if cmp == HandComparison.Exact:
-            c1 = set(self.cards)
-            yield from (c for c in other.cards if c not in c1)
+            c1 = set(self)
+            yield from (c for c in other if c not in c1)
         elif cmp == HandComparison.Values:
-            v1 = set(c.value for c in self.cards)
-            yield from (c for c in other.cards if c.value not in v1)
+            v1 = set(c.value for c in self)
+            yield from (c for c in other if c.value not in v1)
         elif cmp == HandComparison.Suits:
-            s1 = set(c.suit for c in self.cards)
-            yield from (c for c in other.cards if c.suit not in s1)
+            s1 = set(c.suit for c in self)
+            yield from (c for c in other if c.suit not in s1)
         else:
             raise ValueError("cannot compare by {}".format(cmp))
 
@@ -423,16 +406,20 @@ class Hand:
         return type(self)(self.union(other))
 
     def __ibitor__(self, other):
-        self.cards[:] = self.union(other)
+        self[:] = self.union(other)
 
     @staticmethod
     def _default_sort_key(card):
-        return card.value or 0, card.suit or ""
+        return card.value or 0, card.suit
+
+    @staticmethod
+    def _aces_high_sort_key(card):
+        return aces_high(card.value or 0), card.suit
 
     @property
     def _poker_sort_key(self):
         count = {}
-        for c in self.cards:
+        for c in self:
             count[c.value] = count.get(c.value, 0) + 1
         return lambda c: (count.get(c.value), aces_high(c), c.suit)
 
@@ -440,34 +427,28 @@ class Hand:
         """Returns a sorted list of cards in this hand."""
         order = order or _HAND_ORDER.get()
         if order == HandSort.Default:
-            cards = sorted(self.cards, key=self._default_sort_key, reverse=reverse)
+            cards = sorted(self, key=self._default_sort_key, reverse=reverse)
         elif order == HandSort.Poker:
-            cards = sorted(self.cards, key=self._poker_sort_key, reverse=reverse)
+            cards = sorted(self, key=self._poker_sort_key, reverse=reverse)
+        elif order == HandSort.AcesHigh:
+            cards = sorted(self, key=self._aces_high_sort_key, reverse=reverse)
         elif order == HandSort.Unsorted:
-            pass
+            cards = list(self)
         else:
             raise ValueError("unable to sort with {}".format(order))
         return cards
 
     def sort(self, order=None, *, reverse=False):
         """Sorts the cards in this hand in place."""
-        order = order or _HAND_ORDER.get()
-        if order == HandSort.Default:
-            self.cards.sort(key=self._default_sort_key, reverse=reverse)
-        elif order == HandSort.Poker:
-            self.cards.sort(key=self._poker_sort_key, reverse=reverse)
-        elif order == HandSort.Unsorted:
-            pass
-        else:
-            raise ValueError("unable to sort with {}".format(order))
+        self[:] = self.sorted(order=order, reverse=reverse)
 
     def __format__(self, spec):
         import re
 
         if not spec:
-            spec = "4.3desc"
+            spec = "4.3"
         strs = []
-        cards = self.cards
+        cards = self
         if spec.casefold().endswith("desc".casefold()):
             cards = self.sorted(reverse=True)
             spec = spec[:-4]
@@ -476,23 +457,11 @@ class Hand:
             spec = spec[:-3]
         return "".join(format(c, spec) for c in cards)
 
-    def __getitem__(self, index):
-        return self.cards[index]
-
-    def __iter__(self):
-        return iter(self.cards)
-
-    def __len__(self):
-        return len(self.cards)
-
-    def __bool__(self):
-        return bool(self.cards)
-
     def __str__(self):
         return format(self)
 
     def __repr__(self):
-        return "<Hand({!r})>".format(self.cards)
+        return "<Hand({!s})>".format(super().__repr__())
 
     class default_comparison:
         """A context manager for overriding the default comparison."""
@@ -521,20 +490,6 @@ class Hand:
 
         def __exit__(self, *exc):
             _HAND_ORDER.reset(self._token)
-
-    class runtime_type_checks:
-        """A context manager for enabling runtime type validation."""
-
-        def __init__(self, check=True):
-            self._check = check
-            self._token = None
-
-        def __enter__(self):
-            self._token = _HAND_VALIDATION.set(self._check)
-            return self
-
-        def __exit__(self, *exc):
-            _HAND_VALIDATION.reset(self._token)
 
 
 collections.deck = Deck

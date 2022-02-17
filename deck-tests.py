@@ -203,26 +203,24 @@ class PokerHandTests(unittest.TestCase):
 
 class HandTests(unittest.TestCase):
     HAND1 = Hand(
-        Card("♥", 2), Card("♦", 11), Card("♥", 3), Card(joker=True), Card("♠", 11)
+        [Card("♥", 2), Card("♦", 11), Card("♥", 3), Card(joker=True), Card("♠", 11)]
     )
     HAND2 = Hand(
-        Card("♦", 2), Card("♥", 11), Card("♠", 3), Card(joker=True), Card("♠", 11)
+        [Card("♦", 2), Card("♥", 11), Card("♠", 3), Card(joker=True), Card("♠", 11)]
     )
 
     def test_type_checks(self):
-        with Hand.runtime_type_checks():
-            try:
-                Hand(["!not a card!"])
-            except ValueError as ex:
-                assert "!not a card!" in str(ex)
-            else:
-                assert False, "expected runtime error"
+        try:
+            h = Hand(["!not a card!"])
+        except Exception as ex:
+            assert False, "expected no error"
 
-        with Hand.runtime_type_checks(False):
-            try:
-                Hand("!not a card!")
-            except ValueError as ex:
-                assert False, "expected no error"
+        try:
+            h.check_contents()
+        except ValueError as ex:
+            assert "!not a card!" in str(ex)
+        else:
+            assert False, "expected runtime error"
 
     def test_deal(self):
         deck = Deck()
@@ -239,7 +237,7 @@ class HandTests(unittest.TestCase):
         assert [c.value.value for c in hand] == [15, 11, 11, 3, 2]
 
     def test_sort_suit(self):
-        hand = Hand(Card("♦", 2), Card("♠", 2), Card("♣", 2), Card("♥", 2))
+        hand = Hand([Card("♦", 2), Card("♠", 2), Card("♣", 2), Card("♥", 2)])
         hand.sort(deck.HandSort.Default)
         assert "".join(c.suit.value for c in hand) == "♣♦♥♠"
         hand.sort(deck.HandSort.Default, reverse=True)
@@ -265,9 +263,9 @@ class HandTests(unittest.TestCase):
 
     def test_intersect_value(self):
         hand1, hand2 = self.HAND1, self.HAND2
-        hand3 = Hand(Card("♥", 11))
+        hand3 = Hand([Card("♥", 11)])
         expect_hand3 = {Card("♦", 11), Card("♠", 11)}
-        hand4 = Hand(Card(joker=True))
+        hand4 = Hand([Card(joker=True)])
         with Hand.default_comparison(deck.HandComparison.Values):
             # Self-intersect should be the complete set
             assert set(hand1.intersect(hand1)) == set(hand1)
@@ -288,9 +286,9 @@ class HandTests(unittest.TestCase):
 
     def test_intersect_suit(self):
         hand1, hand2 = self.HAND1, self.HAND2
-        hand3 = Hand(Card("♥", 11))
+        hand3 = Hand([Card("♥", 11)])
         expect_hand3 = {Card("♥", 2), Card("♥", 3)}
-        hand4 = Hand(Card(joker=True))
+        hand4 = Hand([Card(joker=True)])
         with Hand.default_comparison(deck.HandComparison.Suits):
             # Self-intersect should be the complete set
             assert set(hand1.intersect(hand1)) == set(hand1)
@@ -322,9 +320,9 @@ class HandTests(unittest.TestCase):
 
     def test_union_value(self):
         hand1, hand2 = self.HAND1, self.HAND2
-        hand3 = Hand(Card("♥", 10), Card("♥", 11))
+        hand3 = Hand([Card("♥", 10), Card("♥", 11)])
         expect_hand3 = [*hand1, hand3[0]]
-        hand4 = Hand(Card(joker=True))
+        hand4 = Hand([Card(joker=True)])
         with Hand.default_comparison(deck.HandComparison.Values):
             # Self-union should be the complete list
             assert list(hand1.union(hand1)) == list(hand1)
@@ -344,9 +342,9 @@ class HandTests(unittest.TestCase):
 
     def test_union_suit(self):
         hand1, hand2 = self.HAND1, self.HAND2
-        hand3 = Hand(Card("♥", 10), Card("♥", 11))
+        hand3 = Hand([Card("♥", 10), Card("♥", 11)])
         expect_hand3 = [*hand1, *hand3]
-        hand4 = Hand(Card(joker=True))
+        hand4 = Hand([Card(joker=True)])
         with Hand.default_comparison(deck.HandComparison.Suits):
             # Self-union should be the complete hand
             assert list(hand1.union(hand1)) == list(hand1)
