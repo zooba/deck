@@ -250,6 +250,37 @@ class HandTests(unittest.TestCase):
         hand.sort(deck.HandSort.Poker, reverse=True)
         assert [c.value.value for c in hand] == [11, 11, 15, 3, 2]
 
+    def test_contains(self):
+        hand1 = self.HAND1
+        assert hand1.index(hand1[1]) == 1
+        assert hand1.index(hand1[1].suit) == 1
+        assert hand1.index(hand1[1].value) == 1
+
+        assert hand1.index(hand1[2]) == 2
+        assert hand1.index(hand1[2].suit) == 0
+        assert hand1.index(hand1[2].suit, start=1) == 2
+        assert hand1.index(hand1[2].value) == 2
+
+        with Hand.default_comparison(deck.HandComparison.Suits):
+            assert hand1.index(hand1[2]) == 0
+        with Hand.default_comparison(deck.HandComparison.Values):
+            assert hand1.index(hand1[2]) == 2
+
+    def test_count(self):
+        hand1 = self.HAND1
+        assert hand1.count(hand1[1]) == 1
+        assert hand1.count(hand1[1].suit) == 1
+        assert hand1.count(hand1[1].value) == 2
+
+        assert hand1.count(hand1[2]) == 1
+        assert hand1.count(hand1[2].suit) == 2
+        assert hand1.count(hand1[2].value) == 1
+
+        with Hand.default_comparison(deck.HandComparison.Suits):
+            assert hand1.count(hand1[2]) == 2
+        with Hand.default_comparison(deck.HandComparison.Values):
+            assert hand1.count(hand1[2]) == 1
+
     def test_intersect_exact(self):
         hand1, hand2 = self.HAND1, self.HAND2
         # Self-intersect should be the complete set

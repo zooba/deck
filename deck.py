@@ -7,6 +7,7 @@ import contextvars
 import enum
 import itertools
 import random
+import sys
 
 
 _SUIT_SORT_ORDER = {
@@ -316,13 +317,13 @@ class Hand(list):
                 )
             )
 
-    def index(self, card_suit_or_value):
+    def index(self, card_suit_or_value, start=0, stop=sys.maxsize):
         """Locate the first matching card, suit or value."""
         # Being passed a whole card is our fast path
         if isinstance(card_suit_or_value, Card):
             cmp = _HAND_CMP.get()
             if cmp == HandComparison.Exact:
-                return super().index(card_suit_or_value)
+                return super().index(card_suit_or_value, start, stop)
             elif cmp == HandComparison.Values:
                 card_suit_or_value = card_suit_or_value.value
             elif cmp == HandComparison.Suits:
@@ -348,13 +349,49 @@ class Hand(list):
         # If we now have a searchable type, search for it
         if isinstance(card_suit_or_value, Value):
             for i, c in enumerate(self):
-                if c.value == card_suit_or_value:
+                if start <= i < stop and c.value == card_suit_or_value:
                     return i
         elif isinstance(card_suit_or_value, Suit):
             for i, c in enumerate(self):
-                if c.suit == card_suit_or_value:
+                if start <= i < stop and c.suit == card_suit_or_value:
                     return i
-        raise ValueError(card_suit_or_value)
+        raise ValueError(f"{card_suit_or_value!r} is not in hand")
+
+    def count(self, card_suit_or_value):
+        """Count the number of matching cards, suits or values."""
+        # Being passed a whole card is our fast path
+        if isinstance(card_suit_or_value, Card):
+            cmp = _HAND_CMP.get()
+            if cmp == HandComparison.Exact:
+                return super().count(card_suit_or_value)
+            elif cmp == HandComparison.Values:
+                card_suit_or_value = card_suit_or_value.value
+            elif cmp == HandComparison.Suits:
+                card_suit_or_value = card_suit_or_value.suit
+            else:
+                raise ValueError("unable to compare with {}".format(cmp))
+
+        # Convert int or str to enum types transparently
+        if isinstance(card_suit_or_value, int):
+            try:
+                card_suit_or_value = _from_enum(Value, card_suit_or_value)
+            except ValueError:
+                pass
+        elif isinstance(card_suit_or_value, str):
+            try:
+                card_suit_or_value = _from_enum(Suit, card_suit_or_value)
+            except ValueError:
+                try:
+                    card_suit_or_value = _from_enum(Value, card_suit_or_value)
+                except ValueError:
+                    pass
+
+        # If we now have a searchable type, search for it
+        if isinstance(card_suit_or_value, Value):
+            return sum(c.value == card_suit_or_value for c in self)
+        elif isinstance(card_suit_or_value, Suit):
+            return sum(c.suit == card_suit_or_value for c in self)
+        return 0
 
     def __contains__(self, card_suit_or_value):
         try:

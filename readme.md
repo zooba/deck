@@ -103,23 +103,33 @@ Hands can be directly instantiated just like a list. No type checking is perform
 ValueError: invalid objects in hand: 'not a card'
 ```
 
-The `index` method is overridden to allow finding cards with either a card object, a value, a suit, or a string or int that represents one of these. Similarly, the `in` operator will also accept these values.
+The `index` and `count` methods are overridden to allow finding cards with either a card object, a value, a suit, or a string or int that represents one of these. Similarly, the `in` operator will also accept these values.
+
+If a card instance is provided, the default comparison method (see below) is used to search. By default, this is an exact match, but can be changed to only match suit or values.
 
 ```python
 >>> deck = Deck()
->>> deck.shuffle(random=Random(101))
+>>> deck.shuffle(random=Random(103))
 >>> hand = deck.deal_hands(hands=1, cards=10)[0]
 >>> 9 in hand
 True
 >>> "diamonds" in hand
 True
 >>> hand.index(Card(Suit.Diamonds, Value.Nine))
-ValueError: Card(<Suit.Diamonds: '♦'>, <Value.Nine: 9>) is not in list
+4
 >>> hand.index(Suit.Diamonds)
-6
+0
 >>> hand.index("diamonds")
-6
+0
 >>> hand.index(Value.Nine)
+4
+>>> hand.count("♦")
+4
+>>> hand.count(nine_diamonds)
+1
+>>> nine_diamonds = Card(Suit.Diamonds, Value.Nine)
+>>> hand.append(nine_diamonds)
+>>> hand.count(nine_diamonds)
 2
 ```
 
