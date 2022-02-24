@@ -18,6 +18,18 @@ class DeckTests(unittest.TestCase):
         d = Deck(include_jokers=False)
         assert len(d) == 52
 
+    def test_count_multiple(self):
+        with self.assertRaises(ValueError):
+            Deck(decks=-1)
+        for i in range(100):
+            d = Deck(decks=i)
+            assert len(d) == 54 * i
+
+    def test_count_no_jokers_multiple(self):
+        for i in range(100):
+            d = Deck(include_jokers=False, decks=i)
+            assert len(d) == 52 * i
+
 
 class CardTests(unittest.TestCase):
     def test_init(self):
