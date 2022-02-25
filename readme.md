@@ -53,6 +53,18 @@ The `Deck` class is, in fact, a subclass of [`deque`](https://docs.python.org/li
 No jokers here!
 ```
 
+If you want to combine multiple decks, pass the `decks` argument. Alternatively, you can create multiple decks and use the regular `deque` members to combine them.
+
+```python
+>>> from deck import Deck
+>>> deck = Deck(decks=2)
+>>> len(deck)
+108
+>>> deck.extend(Deck())
+>>> len(deck)
+162
+```
+
 Decks may be shuffled using the `shuffle` method, which optionally takes a `random` parameter to override the default `random` module.
 
 ```python
@@ -86,6 +98,8 @@ The `Hand` object is a convenient way to handle collections of cards, and the `D
     ])>
 ]
 ```
+
+Note that while `Hand` collections have a useful set of functionality for comparisons and searching, `Deck` does not. You shouldn't be searching through the deck anyway, just shuffle and deal!
 
 ## Hand
 
