@@ -10,8 +10,21 @@ import random
 import sys
 
 
+__all__ = [
+    "Card",
+    "Deck",
+    "get_poker_hand",
+    "Hand",
+    "HandComparison",
+    "HandSort",
+    "PokerHand",
+    "Suit",
+    "Value",
+]
+
+
 _SUIT_SORT_ORDER = {
-    # Handle unexpected comparisons gracefully
+    # Handle suit-less comparisons gracefully (as highest)
     "": 10,
     None: 10,
     # Suits in bridge ordering
@@ -112,17 +125,36 @@ def _from_enum(enm, v):
 
 
 class Card:
+    """Represents a single playing card in the Deck.
+
+    The 'suit' and 'value' may be provided as enum members or strings
+    (with case-insensitive names of the enum members). Values may
+    additionally be provided as integers.
+
+    >>> c = Card(Suit.Diamonds, Value.Nine)
+    >>> c = Card('diamonds', 'nine')
+    >>> c = Card('♦', 9)
+
+    Specifying 'joker' as True will create a joker card, ignoring the
+    other arguments. Jokers do not have a suit, and coloured/black and
+    white cannot be distinguished.
+
+    >>> c = Card(joker=True)
+
+    While not enforced, a Card is assumed to be an immutable constant,
+    and instances may be reused even when representing "physically"
+    distinct cards. Do not modify Card instances directly.
+    """
+
     def __init__(self, suit=None, value=None, joker=False):
-        self.joker = joker
-        if self.joker:
-            self.suit, self.value = None, Value.Joker
+        if joker:
+            self.suit, self.value, self.joker = None, Value.Joker, True
         else:
             if value is None:
                 suit, value = suit
             self.suit = _from_enum(Suit, suit)
             self.value = _from_enum(Value, value)
-        if self.value == Value.Joker:
-            self.joker = True
+            self.joker = self.value == Value.Joker
 
     def __eq__(self, other):
         if not isinstance(other, Card):
@@ -162,19 +194,24 @@ class Card:
 
 
 class Deck(collections.deque):
-    def __init__(self, include_jokers=True):
-        super().__init__(
-            map(
-                Card,
-                itertools.product(
+    """Represents a deck of cards."""
+
+    def __init__(self, include_jokers=True, *, decks=1):
+        if decks < 0:
+            raise ValueError("'decks' cannot be negative")
+        super().__init__()
+        if decks:
+            cards = [
+                Card(i)
+                for i in itertools.product(
                     Suit.__members__.values(),
                     (v for v in Value.__members__.values() if v != Value.Joker),
-                ),
-            )
-        )
-        if include_jokers:
-            self.append(Card(joker=True))
-            self.append(Card(joker=True))
+                )
+            ]
+            if include_jokers:
+                cards.extend([Card(joker=True)] * 2)
+            for _ in range(decks):
+                self.extend(cards)
 
     def shuffle(self, random=random):
         random.shuffle(self)
@@ -196,10 +233,13 @@ class Deck(collections.deque):
 
 
 def aces_high(card):
-    """A sort key function to sort aces high."""
+    """A sort key function to sort aces high.
+
+    This is not used with the Hand class, but is a low-level helper for
+    when dealing with builtin collections of Card or Value values.
+
+    h = sorted(list_of_cards, key=aces_high)"""
     if isinstance(card, Value):
-        if card is None:
-            return 15
         if card == Value.Ace:
             return 14
         return card.value
@@ -501,7 +541,11 @@ class Hand(list):
         return "<Hand({!s})>".format(super().__repr__())
 
     class default_comparison:
-        """A context manager for overriding the default comparison."""
+        """A context manager for overriding the default comparison.
+
+        with Hand.default_comparison(HandComparison.Values):
+            ...
+        """
 
         def __init__(self, cmp=HandComparison.Exact):
             self._cmp = cmp
@@ -515,7 +559,11 @@ class Hand(list):
             _HAND_CMP.reset(self._token)
 
     class default_sort:
-        """A context manager for overriding the default sort order."""
+        """A context manager for overriding the default sort order.
+
+        with Hand.default_sort(HandSort.Poker):
+            ...
+        """
 
         def __init__(self, order=HandSort.Default):
             self._order = order
