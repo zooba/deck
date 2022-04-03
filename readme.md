@@ -210,7 +210,7 @@ The result of the function is a tuple containing first a `PokerHand` value, foll
 Suits are not taken into account for breaking ties.
 
 ```python
->>> from deck import Deck, get_poker_hand
+>>> from deck import Deck, get_poker_hand, Hand, HandSort
 >>> deck = Deck(include_jokers=False)
 >>> deck.shuffle()
 >>> p1, p2 = deck.deal_hands(hands=2, cards=5)
