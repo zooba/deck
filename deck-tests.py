@@ -135,6 +135,17 @@ class PokerHandTests(unittest.TestCase):
         hand = deck.get_poker_hand(cards)
         assert hand == (deck.PokerHand.Straight, 6)
 
+    def test_straight_with_low_ace(self):
+        cards = [
+            Card("Spades", 1),
+            Card("Spades", 2),
+            Card("Clubs", 3),
+            Card("Hearts", 4),
+            Card("Diamonds", 5),
+        ]
+        hand = deck.get_poker_hand(cards)
+        assert hand == (deck.PokerHand.Straight, 5)
+
     def test_flush(self):
         cards = [
             Card("Clubs", 2),
@@ -178,6 +189,17 @@ class PokerHandTests(unittest.TestCase):
         ]
         hand = deck.get_poker_hand(cards)
         assert hand == (deck.PokerHand.StraightFlush, 9)
+
+    def test_straight_flush_with_low_ace(self):
+        cards = [
+            Card("Clubs", 1),
+            Card("Clubs", 2),
+            Card("Clubs", 3),
+            Card("Clubs", 4),
+            Card("Clubs", 5),
+        ]
+        hand = deck.get_poker_hand(cards)
+        assert hand == (deck.PokerHand.StraightFlush, 5)
 
     def test_compare_1(self):
         cards = [
