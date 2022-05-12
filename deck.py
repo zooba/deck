@@ -280,7 +280,8 @@ def get_poker_hand(cards):
         i[0].value == i[1] for i in zip(cards, range(cards[0].value, -5, -1))
     )
     is_ace_low_straight = len(cards) == 5 and all(
-        i[0].value == i[1] for i in zip(cards_low_ace, range(cards_low_ace[0].value, -5, -1))
+        i[0].value == i[1]
+        for i in zip(cards_low_ace, range(cards_low_ace[0].value, -5, -1))
     )
 
     if len(suits) == 1 and is_straight:
@@ -526,7 +527,6 @@ class Hand(list):
         self[:] = self.sorted(order=order, reverse=reverse)
 
     def __format__(self, spec):
-
         if not spec:
             spec = "4.3"
         strs = []
