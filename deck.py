@@ -9,7 +9,6 @@ import itertools
 import random
 import sys
 
-
 __all__ = [
     "Card",
     "Deck",
@@ -21,7 +20,6 @@ __all__ = [
     "Suit",
     "Value",
 ]
-
 
 _SUIT_SORT_ORDER = {
     # Handle suit-less comparisons gracefully (as highest)
@@ -260,6 +258,7 @@ def get_poker_hand(cards):
     The best hand sorts last (is greater than other hands).
     """
     cards = sorted(cards, key=aces_high, reverse=True)
+    cards_low_ace = sorted(cards, key=lambda card: card.value, reverse=True)
 
     # Any jokers will have sorted to the front
     if cards and cards[0].joker:
@@ -280,9 +279,14 @@ def get_poker_hand(cards):
     is_straight = len(cards) == 5 and all(
         i[0].value == i[1] for i in zip(cards, range(cards[0].value, -5, -1))
     )
+    is_ace_low_straight = len(cards) == 5 and all(
+        i[0].value == i[1] for i in zip(cards_low_ace, range(cards_low_ace[0].value, -5, -1))
+    )
 
     if len(suits) == 1 and is_straight:
         return PokerHand.StraightFlush, aces_high(high_card)
+    if len(suits) == 1 and is_ace_low_straight:
+        return PokerHand.StraightFlush, cards_low_ace[0].value
     if of_a_kind == 4:
         return PokerHand.FourOfAKind, aces_high(of_a_kind_card)
     if of_a_kind == 3 and second_pair == 2:
@@ -291,6 +295,8 @@ def get_poker_hand(cards):
         return PokerHand.Flush, aces_high(high_card)
     if is_straight:
         return PokerHand.Straight, aces_high(high_card)
+    if is_ace_low_straight:
+        return PokerHand.Straight, cards_low_ace[0].value
     if of_a_kind == 3:
         return (PokerHand.ThreeOfAKind, aces_high(of_a_kind_card)) + (
             (aces_high(second_pair_card),) if second_pair_card else ()
@@ -520,7 +526,6 @@ class Hand(list):
         self[:] = self.sorted(order=order, reverse=reverse)
 
     def __format__(self, spec):
-        import re
 
         if not spec:
             spec = "4.3"
